@@ -40,11 +40,18 @@ function onReaderLoad(event) {
   <div>
     <div>
       <div class="text-lg font-bold p-4">
-        Upload a JSON file to validate Sudoku!
+        Select a JSON file to validate Sudoku!
       </div>
-      <input @change="handleChange($event)" type="file" accept=".json" />
+      <input
+        class="w-15 text-sm text-slate-500 file:mr-4 file:p-2 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-100 hover:file:bg-blue-200 hover:file:cursor-pointer"
+        @change="handleChange($event)"
+        type="file"
+        accept=".json"
+      />
     </div>
     <!--Suduko board goes here-->
     <SudokuBoard :arrayToCheck="arrayToCheck"> </SudokuBoard>
   </div>
 </template>
+
+<style></style>

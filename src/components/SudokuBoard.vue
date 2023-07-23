@@ -7,28 +7,24 @@ const props = defineProps({
 
 const computedArray = computed(() => props.arrayToCheck);
 
-const dataToDisplay = ref([]);
+const dataToDisplay = ref(Array(81));
 const rowDuplicates = ref([]);
 const colDuplicates = ref([]);
 const boxDuplicates = ref([]);
+const validationMessage = ref("");
 
 watch(computedArray, (value) => {
   dataToDisplay.value = value.flat();
   validateSolution();
 });
 
-function getTextClass() {
-  //wanted to just display actual errors but settled for whole grid in the end
+function getTextClass(index) {
   if (
     rowDuplicates.value.concat(colDuplicates.value).concat(boxDuplicates.value)
-      .length
+      .includes(index)
   ) {
-    return "text-red-600";
+    return "text-red-600 font-bold";
   } else return "text-green-600";
-}
-
-function onlyNums(array) {
-  return array.filter((x) => x != ".");
 }
 
 function validateSolution() {
@@ -38,7 +34,7 @@ function validateSolution() {
   boxDuplicates.value = [];
   //variables;
   let x = 0;
-  let y = 0;
+  // let y = 0;
   let columns = [];
   let boxes = [];
   let boxIndexes = [0, 1, 2, 9, 10, 11, 18, 19, 20];
@@ -46,14 +42,14 @@ function validateSolution() {
   while (x < computedArray.value.length) {
     columns.push(computedArray.value.map((row) => row[x]));
     x++;
-    y++;
+    // y++;
   }
   //get boxes
   function getBoxes(indexes) {
     let box = [];
     for (let i = 0; i <= indexes[8]; i++) {
       if (boxIndexes.includes(i)) {
-        box.push(dataToDisplay.value[i]);
+        box.push(({value: dataToDisplay.value[i], flatArrIndex: i}));
       }
     }
     boxes.push(box);
@@ -76,28 +72,28 @@ function validateSolution() {
   }
 
   function checkForDuplicates(array, type) {
-    array.forEach((box) => {
-      const justNumbers = onlyNums(box);
-      let duplicates = justNumbers.filter((x, index) => {
-        return justNumbers.indexOf(x) !== index;
-      });
-      if (duplicates.length) {
-        duplicates.forEach((dup) => {
+    array.forEach((subArray,index) => {
+      //push flattened array index if duplicates
+      const arrayIndex = index;
+      subArray.filter((x, index) => {
+        if(type == 'box'){
+          if(x.value != "." && subArray.map(box => box.value).indexOf(x.value) != index){
+            boxDuplicates.value.push(x.flatArrIndex);
+          }
+        }
+        else if(x != "." && subArray.indexOf(x) != index){
           switch (type) {
-            case "box":
-              boxDuplicates.value.push(dup);
-              break;
             case "row":
-              rowDuplicates.value.push(dup);
+              rowDuplicates.value.push(arrayIndex * 9 + index);
               break;
             case "col":
-              colDuplicates.value.push(dup);
+              colDuplicates.value.push(index * 9 + arrayIndex);
               break;
             default:
               return;
           }
-        });
-      }
+        }
+      })
     });
   }
 
@@ -110,19 +106,20 @@ function validateSolution() {
     colDuplicates.value.length ||
     boxDuplicates.value.length
   ) {
-    alert("Invalid Solution!");
-  } else alert("Successfully solved so far!");
+    validationMessage.value = "Invalid entries!";
+  } else validationMessage.value = "So far, so good!";
 }
 </script>
 
 <template>
-  <div class="sudoku-grid">
+  <div v-if="computedArray.length">{{ validationMessage }}</div>
+  <div class="sudoku-grid m-2 border border-gray-400">
     <div
-      class="border grid place-items-center"
+      class="border border-gray-300 grid place-items-center"
       v-for="(val, index) in dataToDisplay"
       :key="index"
     >
-      <div :class="getTextClass(val)">{{ val != "." ? val : "" }}</div>
+      <div :class="getTextClass(index)">{{ val != "." ? val : "" }}</div>
     </div>
   </div>
 </template>
@@ -130,7 +127,6 @@ function validateSolution() {
 <style scoped>
 .sudoku-grid {
   display: grid;
-  padding: 1rem;
   grid-template-rows: repeat(9, 1fr);
   grid-template-columns: repeat(9, 1fr);
   width: 500px;
